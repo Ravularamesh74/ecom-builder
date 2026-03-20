@@ -13,6 +13,7 @@ import ProductCard from "@/components/ProductCard";
 import { products, reviews } from "@/data/products";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -101,15 +102,14 @@ const ProductDetail = () => {
             </span>
           </div>
 
-          {/* PRICE */}
           <div className="mb-4">
             <span className="text-3xl font-bold text-price">
-              ${product.price}
+              {formatPrice(product.price)}
             </span>
             {product.originalPrice && (
               <div className="text-sm">
                 <span className="line-through mr-2">
-                  ${product.originalPrice}
+                  {formatPrice(product.originalPrice)}
                 </span>
                 <span className="text-red-500">
                   {discount}% OFF

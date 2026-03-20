@@ -5,11 +5,11 @@ import ProductCard from "@/components/ProductCard";
 import { products, categories } from "@/data/products";
 
 const priceRanges = [
-  { label: "Under $25", min: 0, max: 25 },
-  { label: "$25 – $50", min: 25, max: 50 },
-  { label: "$50 – $100", min: 50, max: 100 },
-  { label: "$100 – $200", min: 100, max: 200 },
-  { label: "Over $200", min: 200, max: Infinity },
+  { label: "Under ₹2500", min: 0, max: 2500 },
+  { label: "₹2500 – ₹5000", min: 2500, max: 5000 },
+  { label: "₹5000 – ₹10000", min: 5000, max: 10000 },
+  { label: "₹10000 – ₹20000", min: 10000, max: 20000 },
+  { label: "Over ₹20000", min: 20000, max: Infinity },
 ];
 
 const ITEMS_PER_PAGE = 8;

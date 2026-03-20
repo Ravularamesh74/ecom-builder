@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartContext";
 import type { Product } from "@/data/products";
 import { toast } from "sonner";
 import { memo } from "react";
+import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -110,11 +111,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="mt-auto">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-price">
-              ${product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </span>
             {product.originalPrice && (
               <span className="text-sm line-through text-muted-foreground">
-                ${product.originalPrice.toFixed(2)}
+                {formatPrice(product.originalPrice)}
               </span>
             )}
           </div>

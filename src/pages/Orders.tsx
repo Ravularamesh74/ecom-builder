@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Package, ArrowLeft, CheckCircle, Clock, XCircle } from "lucide-react";
 import { products } from "@/data/products";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 
 // 🔥 MOCK ORDERS (replace with API later)
 const orders = [
@@ -101,7 +102,7 @@ const Orders = () => {
                 </div>
 
                 <div className="font-bold">
-                  ${order.total.toFixed(2)}
+                  {formatPrice(order.total)}
                 </div>
               </div>
 
@@ -121,7 +122,7 @@ const Orders = () => {
                         {item.title}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        ${item.price}
+                        {formatPrice(item.price)}
                       </p>
                     </div>
 

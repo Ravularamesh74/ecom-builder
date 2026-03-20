@@ -10,6 +10,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 
 const Cart = () => {
   const {
@@ -24,8 +25,8 @@ const Cart = () => {
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
 
-  const SHIPPING_THRESHOLD = 50;
-  const SHIPPING_COST = 5.99;
+  const SHIPPING_THRESHOLD = 4000;
+  const SHIPPING_COST = 150;
 
   const applyCoupon = () => {
     if (coupon === "SAVE10") {
@@ -126,7 +127,7 @@ const Cart = () => {
               </div>
 
               <div className="font-bold">
-                ${(product.price * quantity).toFixed(2)}
+                {formatPrice(product.price * quantity)}
               </div>
             </div>
           ))}
@@ -165,7 +166,7 @@ const Cart = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>{formatPrice(totalPrice)}</span>
             </div>
 
             {discount > 0 && (
@@ -177,12 +178,12 @@ const Cart = () => {
 
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>{shipping === 0 ? "FREE" : `$${shipping}`}</span>
+              <span>{shipping === 0 ? "FREE" : formatPrice(shipping)}</span>
             </div>
 
             <div className="border-t pt-2 flex justify-between font-bold">
               <span>Total</span>
-              <span>${finalTotal.toFixed(2)}</span>
+              <span>{formatPrice(finalTotal)}</span>
             </div>
           </div>
 

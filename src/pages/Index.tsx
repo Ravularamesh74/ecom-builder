@@ -74,7 +74,7 @@ const Index = () => {
       <section className="border-b bg-card py-4">
         <div className="container grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-sm">
           {[
-            { icon: Truck, label: "Free Shipping $50+" },
+            { icon: Truck, label: "Free Shipping ₹4000+" },
             { icon: Shield, label: "Secure Payments" },
             { icon: RotateCcw, label: "30-Day Returns" },
             { icon: Zap, label: "Instant Delivery" },
