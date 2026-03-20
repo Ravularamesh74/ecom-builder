@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Search, User, Menu, X, MapPin, ChevronDown } from "lucide-react";
+import {
+  ShoppingCart,
+  Search,
+  User,
+  Menu,
+  X,
+  MapPin,
+  ChevronDown,
+} from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { categories } from "@/data/products";
 
@@ -8,128 +16,158 @@ const Navbar = () => {
   const { totalItems } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [scrolled, setScrolled] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Sticky shadow on scroll
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Fake search suggestions (replace with API later)
+  useEffect(() => {
+    if (!searchQuery.trim()) return setSuggestions([]);
+    const filtered = categories.filter((c) =>
+      c.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setSuggestions(filtered.slice(0, 5));
+  }, [searchQuery]);
+
+  const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSuggestions([]);
     }
   };
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Main header bar */}
+    <header className={`sticky top-0 z-50 ${scrolled ? "shadow-lg" : ""}`}>
+      {/* TOP BAR */}
       <div className="marketplace-header">
-        <div className="container flex items-center gap-4 py-2">
-          {/* Logo */}
-          <Link to="/" className="flex-shrink-0 text-xl font-extrabold tracking-tight">
-            <span className="text-primary">Shop</span>
-            <span className="text-[hsl(var(--marketplace-header-foreground))]">Hub</span>
+        <div className="container flex items-center gap-4 py-2 relative">
+
+          {/* LOGO */}
+          <Link to="/" className="text-xl font-extrabold">
+            <span className="text-primary">Shop</span>Hub
           </Link>
 
-          {/* Deliver to */}
-          <button className="hidden lg:flex items-center gap-1 text-xs hover:outline hover:outline-1 hover:outline-[hsl(var(--marketplace-header-foreground)/0.3)] rounded p-1">
-            <MapPin className="w-4 h-4 text-[hsl(var(--marketplace-header-foreground)/0.7)]" />
-            <div className="text-left">
-              <span className="text-[hsl(var(--marketplace-header-foreground)/0.7)] block leading-tight">Deliver to</span>
-              <span className="font-bold text-[hsl(var(--marketplace-header-foreground))] leading-tight">Your Location</span>
+          {/* LOCATION */}
+          <button className="hidden lg:flex items-center gap-1 text-xs hover:bg-white/10 p-2 rounded">
+            <MapPin className="w-4 h-4" />
+            <div>
+              <p className="text-[10px] opacity-70">Deliver to</p>
+              <p className="font-bold text-xs">Your Location</p>
             </div>
           </button>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearch} className="flex-1 flex max-w-2xl">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products, brands, and more..."
-              className="flex-1 px-4 py-2 rounded-l-md text-sm text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-r-md transition-colors"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-          </form>
+          {/* SEARCH */}
+          <div className="flex-1 relative max-w-2xl">
+            <form onSubmit={handleSearch} className="flex">
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="flex-1 px-4 py-2 rounded-l-md bg-card text-black text-sm outline-none"
+              />
+              <button className="bg-primary px-4 rounded-r-md">
+                <Search className="w-5 h-5" />
+              </button>
+            </form>
 
-          {/* Right side icons */}
+            {/* SEARCH SUGGESTIONS */}
+            {suggestions.length > 0 && (
+              <div className="absolute bg-white text-black w-full mt-1 rounded shadow-lg z-50">
+                {suggestions.map((item) => (
+                  <div
+                    key={item}
+                    onClick={() => {
+                      navigate(`/products?category=${item}`);
+                      setSuggestions([]);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT SIDE */}
           <div className="flex items-center gap-3">
-            {/* Account */}
-            <button className="hidden sm:flex items-center gap-1 text-xs hover:outline hover:outline-1 hover:outline-[hsl(var(--marketplace-header-foreground)/0.3)] rounded p-1">
-              <User className="w-5 h-5 text-[hsl(var(--marketplace-header-foreground))]" />
-              <div className="text-left">
-                <span className="text-[hsl(var(--marketplace-header-foreground)/0.7)] block leading-tight">Hello, Sign in</span>
-                <span className="font-bold text-[hsl(var(--marketplace-header-foreground))] leading-tight flex items-center gap-0.5">
-                  Account <ChevronDown className="w-3 h-3" />
-                </span>
-              </div>
-            </button>
 
-            {/* Cart */}
-            <Link
-              to="/cart"
-              className="relative flex items-center gap-1 hover:outline hover:outline-1 hover:outline-[hsl(var(--marketplace-header-foreground)/0.3)] rounded p-1"
-            >
-              <div className="relative">
-                <ShoppingCart className="w-6 h-6 text-[hsl(var(--marketplace-header-foreground))]" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </div>
-              <span className="hidden sm:block text-xs font-bold text-[hsl(var(--marketplace-header-foreground))]">Cart</span>
+            {/* ACCOUNT DROPDOWN */}
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setAccountOpen(!accountOpen)}
+                className="flex items-center gap-1 text-xs hover:bg-white/10 p-2 rounded"
+              >
+                <User className="w-5 h-5" />
+                <span>Account</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {accountOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded shadow-lg z-50">
+                  <Link to="/login" className="block px-4 py-2 hover:bg-gray-100">Login</Link>
+                  <Link to="/register" className="block px-4 py-2 hover:bg-gray-100">Register</Link>
+                  <Link to="/orders" className="block px-4 py-2 hover:bg-gray-100">Orders</Link>
+                </div>
+              )}
+            </div>
+
+            {/* CART */}
+            <Link to="/cart" className="relative p-2">
+              <ShoppingCart className="w-6 h-6" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
-            {/* Mobile menu toggle */}
+            {/* MOBILE MENU */}
             <button
-              className="lg:hidden text-[hsl(var(--marketplace-header-foreground))]"
+              className="lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X /> : <Menu />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Category nav bar */}
-      <nav className="marketplace-nav hidden lg:block">
-        <div className="container flex items-center gap-4 py-1 text-sm overflow-x-auto">
-          <Link to="/products" className="hover:underline font-semibold whitespace-nowrap flex items-center gap-1">
+      {/* CATEGORY BAR */}
+      <nav className="hidden lg:flex marketplace-nav">
+        <div className="container flex gap-4 py-2 text-sm overflow-x-auto">
+          <Link to="/products" className="font-semibold flex items-center gap-1">
             <Menu className="w-4 h-4" /> All
           </Link>
           {categories.map((cat) => (
-            <Link
-              key={cat}
-              to={`/products?category=${encodeURIComponent(cat)}`}
-              className="hover:underline whitespace-nowrap"
-            >
+            <Link key={cat} to={`/products?category=${cat}`}>
               {cat}
             </Link>
           ))}
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* MOBILE DRAWER */}
       {mobileMenuOpen && (
-        <div className="lg:hidden marketplace-nav border-t border-[hsl(var(--marketplace-header-foreground)/0.1)]">
-          <div className="container py-3 space-y-2">
-            <Link to="/products" className="block py-1 font-semibold" onClick={() => setMobileMenuOpen(false)}>
-              All Products
+        <div className="lg:hidden bg-white text-black p-4 space-y-2 shadow-lg">
+          <Link to="/login">Login</Link>
+          <Link to="/cart">Cart</Link>
+          <hr />
+          {categories.map((cat) => (
+            <Link key={cat} to={`/products?category=${cat}`}>
+              {cat}
             </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat}
-                to={`/products?category=${encodeURIComponent(cat)}`}
-                className="block py-1 text-sm"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {cat}
-              </Link>
-            ))}
-          </div>
+          ))}
         </div>
       )}
     </header>

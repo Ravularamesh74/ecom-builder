@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
@@ -12,17 +12,28 @@ const priceRanges = [
   { label: "Over $200", min: 200, max: Infinity },
 ];
 
+const ITEMS_PER_PAGE = 8;
+
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get("category") || "";
-  const searchParam = searchParams.get("search") || "";
 
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam);
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") || "");
   const [selectedPriceRange, setSelectedPriceRange] = useState<number | null>(null);
   const [minRating, setMinRating] = useState(0);
   const [productType, setProductType] = useState<"" | "physical" | "digital">("");
   const [sortBy, setSortBy] = useState("featured");
+  const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+
+  const searchParam = searchParams.get("search") || "";
+
+  // ✅ Sync URL
+  useEffect(() => {
+    const params: any = {};
+    if (selectedCategory) params.category = selectedCategory;
+    if (searchParam) params.search = searchParam;
+    setSearchParams(params);
+  }, [selectedCategory]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -30,191 +41,152 @@ const Products = () => {
     if (searchParam) {
       const q = searchParam.toLowerCase();
       result = result.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
       );
     }
-    if (selectedCategory) result = result.filter((p) => p.category === selectedCategory);
+
+    if (selectedCategory)
+      result = result.filter((p) => p.category === selectedCategory);
+
     if (selectedPriceRange !== null) {
       const range = priceRanges[selectedPriceRange];
-      result = result.filter((p) => p.price >= range.min && p.price < range.max);
+      result = result.filter(
+        (p) => p.price >= range.min && p.price < range.max
+      );
     }
-    if (minRating > 0) result = result.filter((p) => p.rating >= minRating);
-    if (productType) result = result.filter((p) => p.type === productType);
+
+    if (minRating > 0)
+      result = result.filter((p) => p.rating >= minRating);
+
+    if (productType)
+      result = result.filter((p) => p.type === productType);
 
     switch (sortBy) {
-      case "price-asc": result.sort((a, b) => a.price - b.price); break;
-      case "price-desc": result.sort((a, b) => b.price - a.price); break;
-      case "rating": result.sort((a, b) => b.rating - a.rating); break;
-      case "reviews": result.sort((a, b) => b.reviewCount - a.reviewCount); break;
+      case "price-asc":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        result.sort((a, b) => b.rating - a.rating);
+        break;
     }
 
     return result;
   }, [searchParam, selectedCategory, selectedPriceRange, minRating, productType, sortBy]);
+
+  // ✅ Pagination
+  const paginatedProducts = filteredProducts.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
 
   const clearFilters = () => {
     setSelectedCategory("");
     setSelectedPriceRange(null);
     setMinRating(0);
     setProductType("");
-    setSearchParams({});
+    setPage(1);
   };
-
-  const hasFilters = selectedCategory || selectedPriceRange !== null || minRating > 0 || productType || searchParam;
-
-  const FilterSidebar = () => (
-    <div className="space-y-6">
-      {/* Category */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Category</h3>
-        <ul className="space-y-1">
-          {categories.map((cat) => (
-            <li key={cat}>
-              <button
-                onClick={() => { setSelectedCategory(selectedCategory === cat ? "" : cat); }}
-                className={`text-sm w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors ${
-                  selectedCategory === cat ? "bg-accent text-primary font-medium" : "text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Price */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Price</h3>
-        <ul className="space-y-1">
-          {priceRanges.map((range, i) => (
-            <li key={range.label}>
-              <button
-                onClick={() => setSelectedPriceRange(selectedPriceRange === i ? null : i)}
-                className={`text-sm w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors ${
-                  selectedPriceRange === i ? "bg-accent text-primary font-medium" : "text-foreground"
-                }`}
-              >
-                {range.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Rating */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Customer Rating</h3>
-        <ul className="space-y-1">
-          {[4, 3, 2, 1].map((r) => (
-            <li key={r}>
-              <button
-                onClick={() => setMinRating(minRating === r ? 0 : r)}
-                className={`text-sm w-full text-left px-2 py-1 rounded hover:bg-accent transition-colors ${
-                  minRating === r ? "bg-accent text-primary font-medium" : "text-foreground"
-                }`}
-              >
-                {r}★ & Up
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Type */}
-      <div>
-        <h3 className="font-semibold text-sm mb-2">Product Type</h3>
-        <ul className="space-y-1">
-          {(["physical", "digital"] as const).map((t) => (
-            <li key={t}>
-              <button
-                onClick={() => setProductType(productType === t ? "" : t)}
-                className={`text-sm w-full text-left px-2 py-1 rounded capitalize hover:bg-accent transition-colors ${
-                  productType === t ? "bg-accent text-primary font-medium" : "text-foreground"
-                }`}
-              >
-                {t}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
 
   return (
     <div className="container py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {searchParam ? `Results for "${searchParam}"` : selectedCategory || "All Products"}
-          </h1>
-          <p className="text-sm text-muted-foreground">{filteredProducts.length} products found</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {hasFilters && (
-            <button onClick={clearFilters} className="text-sm text-primary hover:underline flex items-center gap-1">
-              <X className="w-3 h-3" /> Clear
-            </button>
-          )}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="text-sm border border-border rounded-md px-3 py-1.5 bg-card"
-          >
-            <option value="featured">Featured</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Avg. Rating</option>
-            <option value="reviews">Most Reviews</option>
-          </select>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="lg:hidden flex items-center gap-1 text-sm border border-border rounded-md px-3 py-1.5 bg-card"
-          >
-            <SlidersHorizontal className="w-4 h-4" /> Filters
-          </button>
-        </div>
+
+      {/* HEADER */}
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">
+          {searchParam ? `Results for "${searchParam}"` : "All Products"}
+        </h1>
+
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="lg:hidden border px-3 py-1 flex gap-1"
+        >
+          <SlidersHorizontal size={16} /> Filters
+        </button>
+      </div>
+
+      {/* FILTER CHIPS */}
+      <div className="flex gap-2 flex-wrap mb-4">
+        {selectedCategory && (
+          <span className="bg-accent px-3 py-1 text-sm rounded flex items-center gap-1">
+            {selectedCategory}
+            <X size={14} onClick={() => setSelectedCategory("")} />
+          </span>
+        )}
+        {minRating > 0 && (
+          <span className="bg-accent px-3 py-1 text-sm rounded">
+            {minRating}★+
+          </span>
+        )}
       </div>
 
       <div className="flex gap-6">
-        {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-56 flex-shrink-0">
-          <div className="bg-card border border-border rounded-lg p-4 sticky top-36">
-            <FilterSidebar />
+
+        {/* SIDEBAR */}
+        <aside className="hidden lg:block w-56">
+          <div className="bg-card p-4 rounded border sticky top-32 space-y-4">
+
+            <h3 className="font-semibold">Category</h3>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className="block text-sm"
+              >
+                {cat}
+              </button>
+            ))}
+
+            <h3 className="font-semibold mt-4">Price</h3>
+            {priceRanges.map((r, i) => (
+              <button
+                key={r.label}
+                onClick={() => setSelectedPriceRange(i)}
+                className="block text-sm"
+              >
+                {r.label}
+              </button>
+            ))}
+
+            <button
+              onClick={clearFilters}
+              className="text-red-500 text-sm mt-4"
+            >
+              Clear Filters
+            </button>
           </div>
         </aside>
 
-        {/* Mobile filter drawer */}
-        {showFilters && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-foreground/50" onClick={() => setShowFilters(false)} />
-            <div className="absolute left-0 top-0 bottom-0 w-72 bg-card p-4 overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold">Filters</h2>
-                <button onClick={() => setShowFilters(false)}>
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <FilterSidebar />
-            </div>
-          </div>
-        )}
-
-        {/* Product grid */}
+        {/* PRODUCTS */}
         <div className="flex-1">
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-lg font-medium">No products found</p>
-              <p className="text-muted-foreground">Try adjusting your filters or search terms.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {paginatedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`px-3 py-1 border rounded ${
+                  page === i + 1 ? "bg-primary text-white" : ""
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+
         </div>
       </div>
     </div>
